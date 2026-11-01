@@ -1,7 +1,7 @@
 
 """Overview page: one screen that shows how trustworthy the data is today."""
 from __future__ import annotations
-from turtle import pd
+import pandas as pd
 
 import plotly.graph_objects as go
 import streamlit as st
