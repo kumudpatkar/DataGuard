@@ -1,170 +1,506 @@
-# DataGuard
+# DataGuard — Automated Data Quality & Reconciliation Platform
 
-**A data trust layer.** DataGuard finds differences between two systems, explains *why* they
-happen, shows *how much money* they put at risk, and tracks every one until it is fixed.
+**Transforming raw business data into trusted, actionable intelligence.**
 
-## The problem it solves
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B)](https://streamlit.io/)
+[![Pandas](https://img.shields.io/badge/Data-Pandas-150458)](https://pandas.pydata.org/)
+[![Plotly](https://img.shields.io/badge/Visualization-Plotly-3F4F75)](https://plotly.com/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-An online business keeps orders in its own system and payments in a gateway such as Razorpay,
-PayU or the bank. Every day someone in finance compares the two in Excel. It is slow, and the
-real pain is not finding mismatches but what comes after:
+**Live Application:** https://dataguard-gu6qtnvkwu3ey3nffm5out.streamlit.app/
 
-* There are thousands of them. Which ones matter first?
-* Many have the same cause. Why do they keep happening?
-* Nobody owns them, so they are found again next week.
-* Small rounding differences and normal settlement delays create noise that hides real errors.
+**GitHub Repository:** https://github.com/kumudpatkar/DataGuard
 
-DataGuard does this work automatically.
+---
 
-## What is inside
+## 1. Overview
 
-| Feature | What it does |
-|---|---|
-| **Fast reconciliation** | One pandas merge, so 200,000 rows take about 2 seconds. Cleans keys (`ORD-1005` = `1005`), ignores rounding within a tolerance, treats settlement delays as timing differences, and never silently drops duplicates or blank keys. |
-| **Money-at-Risk** | Every exception gets a money value (exposure x severity), so the worst ones come first. |
-| **Root-cause detector** | Finds patterns: a fixed 2.4% gateway fee, "35% of COD orders never reach payments", a placeholder customer id, duplicate payments from retries. |
-| **Exception tickets** | Assign, comment, change status. Tickets close automatically when the data is fixed and re-open if the problem returns. Every change is in the audit log. |
-| **Quality rules** | 10 rule types, rules stored in `config/rules.yaml`, run many at once, automatic rule suggestions, and a point-and-click rule builder. |
-| **Health score and alerts** | One 0 to 100 score per run, a trend chart, and Telegram or webhook alerts when it drops. |
-| **Any two files** | Upload CSV or Excel, map the columns, and compare. No code needed. |
-| **Retail analytics** | A revenue bridge that adds up exactly, products and countries without fees or postage mixed in, and a KPI trust score. |
-| **Daily automation** | `scripts/run_daily.py` runs everything without the app and exits with a code your scheduler can use. |
+DataGuard is an automated data quality, reconciliation and exception management platform built using Python, Pandas and Streamlit.
 
-## Quick start
+Businesses frequently maintain financial and operational information across multiple systems. Differences between these systems can result in incorrect reports, financial discrepancies, duplicate transactions and unreliable business decisions.
 
-You need Python 3.10 or newer.
+Traditional reconciliation processes often depend on manual Excel comparisons, making them time-consuming, difficult to scale and challenging to audit.
 
-**Windows:** double-click `setup.bat` once, then `run.bat`.
+DataGuard addresses these challenges by providing a centralized platform that:
 
-**macOS / Linux:** `./setup.sh` once, then `./run.sh`.
+- Compares records across multiple data sources.
+- Identifies missing, duplicate and mismatched records.
+- Quantifies financial exposure through Money-at-Risk analysis.
+- Detects recurring discrepancy patterns.
+- Tracks exceptions through a ticket-based workflow.
+- Monitors data quality using configurable validation rules.
+- Generates data health scores and operational alerts.
+- Provides interactive analytics and reporting dashboards.
 
-**Or by hand:**
+The platform is designed to support both demonstration datasets and user-provided business data.
 
-```bash
-python -m venv .venv
-# Windows:  .venv\Scripts\activate        macOS/Linux:  source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py
-```
+## 2. Business Problem
 
-On the **Overview** page, press **Run the demo now** to see it working on realistic data.
+Consider an e-commerce company that stores order information in its internal system while payment information is maintained by an external payment gateway.
 
-### Open in VS Code
+Every day, finance and operations teams need to verify:
 
-Open the `DataGuard` folder (or double-click `DataGuard.code-workspace`). Press **F5** and choose
-*DataGuard: run the app*. Run tests with the Testing panel or `Ctrl+Shift+P` > *Tasks: Run Test Task*.
+- Whether every order has a corresponding payment.
+- Whether transaction amounts match.
+- Whether duplicate payments exist.
+- Whether settlement delays explain apparent differences.
+- Which discrepancies create the highest financial risk.
+- Whether previously identified issues have been resolved.
 
-## Using your own data
+Manual reconciliation makes these activities difficult to manage consistently.
 
-* **Two files to compare:** open **Reconciliation**, choose *Upload my own files*, pick the key
-  column, the columns to compare, and the tolerance.
-* **A permanent pipeline:** add an entry to `config/pipeline.yaml`. Use the existing one as a template.
-* **Your full retail file:** put it at `data/data.csv` and restart. Without it the 10,000-row
-  sample `data/sample_retail.csv` is used.
-* **Your own rules:** add a rule set to `config/rules.yaml`, or build rules in the app and
-  download them as YAML.
+**DataGuard automates the comparison process and helps teams move from identifying discrepancies to investigating and resolving them.**
 
-## Project structure
+## 3. Key Features
 
-```
-DataGuard/
-├── app.py                  Streamlit entry point (sidebar and page choice only)
-├── core/                   All the logic. No Streamlit code here, so it is easy to test.
-│   ├── reconciliation.py   The comparison engine
-│   ├── risk.py             Money-at-Risk scoring
-│   ├── root_cause.py       Pattern detector
-│   ├── quality_rules.py    Rules engine, rule suggestions, YAML loading
-│   ├── workflow.py         Tickets, comments, run history, audit log (SQLite)
-│   ├── health.py           Health score
-│   ├── alerts.py           Telegram and webhook alerts
-│   ├── retail.py           Retail cleaning, revenue bridge, trust score
-│   ├── pipeline.py         Runs everything in one call (used by app and script)
-│   └── config.py           Paths and settings from .env
-├── views/                  One file per page of the app
-├── config/                 pipeline.yaml and rules.yaml
-├── scripts/                run_daily.py, generate_demo_data.py, load_to_mysql.py
-├── tests/                  Automated tests
-├── data/                   Demo and sample data
-└── storage/                SQLite database is created here (not committed)
-```
+### 3.1 Automated Data Reconciliation
 
-## How the main ideas work
+Compare two datasets using configurable matching keys and comparison rules.
 
-**Status of a record**
+Capabilities:
 
-| Status | Meaning |
-|---|---|
-| Matched | Same on both sides, including differences inside the tolerance |
-| Timing Difference | Matches a timing rule, for example *Completed* in orders but *Pending* in payments |
-| Mismatch | A real difference in an amount, status or other field |
-| Missing in Target / Source | The record exists on one side only |
-| Duplicate in Source / Target | The same key appears more than once |
-| Missing Key | A record has no key, so it cannot be matched |
+- CSV and Excel file support.
+- Column mapping and matching-key selection.
+- Data normalization and key cleaning.
+- Configurable numerical tolerance.
+- Duplicate record identification.
+- Missing record detection.
+- Field-level mismatch identification.
+- Settlement timing difference handling.
+- Preservation of blank and duplicate keys for exception analysis.
 
-**Money-at-Risk** = exposure x severity.
-Exposure is the money affected: the full amount for a missing record, the gap for an amount
-mismatch, the extra copies for a duplicate. Severity runs from 1.0 (missing payment) down to
-0.2 (timing delay). Weights are in `core/risk.py`.
+### 3.2 Money-at-Risk Analysis
 
-**Health score** = Matching 60% + Completeness 15% + Rules 15% + Uniqueness 10%.
-Matching is strict on purpose: a timing delay counts as half a match, and every 1% of records
-with an exception costs 3 points of the Matching part (99% match = 97, 95% = 85, 90% = 70,
-80% = 40). 90 or more is Healthy, 75 to 90 Needs attention, below 75 At risk.
+Identify discrepancies based on their financial impact and severity.
 
-**KPI trust score** (retail) = the share of sales value that has an identified customer and
-passes basic checks. It tells you how far customer-level numbers can be trusted.
+The risk engine calculates:
 
-## Daily automation
+**Money-at-Risk = Financial Exposure × Severity Weight**
+
+Examples include:
+
+- Missing transactions.
+- Incorrect payment amounts.
+- Duplicate payments.
+- Settlement timing differences.
+
+This helps prioritize exceptions based on potential business impact rather than treating every discrepancy equally.
+
+### 3.3 Root Cause Detection
+
+Identify recurring patterns behind data discrepancies.
+
+Examples:
+
+- Gateway fee inconsistencies.
+- Duplicate transactions caused by retry operations.
+- Missing payment records.
+- Invalid customer identifiers.
+- Recurring order and payment mismatches.
+
+The objective is to help analysts investigate the underlying reasons behind repeated data quality problems.
+
+### 3.4 Exception Management & Audit Tracking
+
+Manage identified discrepancies through a structured ticket workflow.
+
+Capabilities:
+
+- Exception assignment.
+- Status updates.
+- Comments and investigation notes.
+- Automatic ticket closure when an issue is resolved.
+- Reopening when a previously resolved issue returns.
+- Audit history for tracking changes.
+
+### 3.5 Configurable Data Quality Rules
+
+Validate datasets using configurable business rules.
+
+Capabilities:
+
+- Ten supported rule types.
+- YAML-based rule configuration.
+- Multiple validation rules.
+- Automated rule suggestions.
+- Interactive rule builder.
+- Data quality issue identification.
+
+Rules are maintained in `config/rules.yaml`.
+
+### 3.6 Data Health Monitoring
+
+Monitor overall dataset reliability using a score between 0 and 100.
+
+The health score uses four components:
+
+| Component | Weight |
+|---|---:|
+| Record Matching | 60% |
+| Completeness | 15% |
+| Rule Validation | 15% |
+| Uniqueness | 10% |
+
+Health categories:
+
+- 90–100: Healthy
+- 75–89: Needs Attention
+- Below 75: At Risk
+
+The platform also provides health trends and configurable Telegram or webhook alerts.
+
+### 3.7 Retail Sales Analytics
+
+Explore retail datasets through interactive analytical dashboards.
+
+Capabilities:
+
+- Revenue analysis.
+- Product and country-level performance.
+- Revenue bridge analysis.
+- Sales quality monitoring.
+- KPI trust scoring.
+- Interactive data exploration.
+
+The included retail sample dataset contains approximately 10,000 records.
+
+### 3.8 Daily Pipeline Automation
+
+Execute reconciliation and quality checks without opening the Streamlit interface.
+
+Example:
 
 ```bash
 python scripts/run_daily.py --pipeline orders_vs_payments --threshold 80
 ```
 
-Reconciles, saves the run and tickets, writes `reports/<pipeline>_<date>.csv`, and sends an alert
-if the score is below the threshold. The exit code is 1 when the score is below the threshold.
+The automation process can:
 
-* **Windows Task Scheduler:** run `.venv\Scripts\python.exe scripts\run_daily.py`, start in the project folder.
-* **cron:** `0 8 * * *  cd /path/to/DataGuard && .venv/bin/python scripts/run_daily.py`
+- Execute configured pipelines.
+- Generate reconciliation reports.
+- Update exception records.
+- Calculate health scores.
+- Trigger alerts when scores fall below configured thresholds.
 
-## Alerts and secrets
+## 4. Technology Stack
 
-Copy `.env.example` to `.env` and fill in only what you need. **Never commit `.env`**; it is
-already in `.gitignore`. No password is stored in the code.
+| Technology | Purpose |
+|---|---|
+| Python | Application development and processing |
+| Pandas | Data cleaning and reconciliation |
+| Streamlit | Interactive web application |
+| Plotly | Interactive data visualization |
+| MySQL | Optional relational data storage |
+| SQLite | Workflow and audit storage |
+| YAML | Pipeline and quality rule configuration |
+| Pytest | Automated testing |
+| Git & GitHub | Version control and source management |
+| Streamlit Community Cloud | Application deployment |
 
-## Tests
+## 5. Application Modules
+
+| Module | Description |
+|---|---|
+| Executive Overview | Overall reconciliation and business health |
+| Order Reconciliation | Source-to-target record comparison |
+| Data Quality | Validation rules and quality monitoring |
+| Exceptions | Discrepancy investigation and tracking |
+| Health Monitoring | Data health scores and trends |
+| Retail Sales Analytics | Retail performance analysis |
+| Retail Data Explorer | Dataset exploration |
+
+## 6. Application Architecture
+
+DataGuard follows a modular architecture that separates business logic from the user interface.
+
+```text
+              DATA SOURCES
+                   |
+          CSV / Excel / MySQL
+                   |
+                   v
+          DATA PROCESSING
+              Pandas
+                   |
+                   v
+        RECONCILIATION ENGINE
+          Matching & Comparison
+                   |
+          +--------+--------+
+          |        |        |
+          v        v        v
+        Quality  Risk    Root Cause
+         Rules   Engine   Detection
+          |        |        |
+          +--------+--------+
+                   |
+                   v
+          EXCEPTION MANAGEMENT
+             SQLite Storage
+                   |
+                   v
+          STREAMLIT DASHBOARD
+                   |
+          +--------+--------+
+          |        |        |
+          v        v        v
+        Overview Reports Analytics
+```
+
+## 7. Project Structure
+
+```text
+DataGuard/
+│
+├── app.py
+├── requirements.txt
+├── README.md
+├── Dockerfile
+│
+├── core/
+│   ├── reconciliation.py
+│   ├── quality_rules.py
+│   ├── risk.py
+│   ├── root_cause.py
+│   ├── workflow.py
+│   ├── health.py
+│   ├── alerts.py
+│   ├── retail.py
+│   ├── pipeline.py
+│   ├── config.py
+│   └── utils.py
+│
+├── views/
+│   ├── overview_page.py
+│   ├── reconciliation_page.py
+│   ├── rules_page.py
+│   ├── exceptions_page.py
+│   ├── health_page.py
+│   └── retail_page.py
+│
+├── config/
+│   ├── pipeline.yaml
+│   └── rules.yaml
+│
+├── scripts/
+│   ├── run_daily.py
+│   ├── generate_demo_data.py
+│   ├── load_to_mysql.py
+│   └── refresh_ticket_risk.py
+│
+├── tests/
+│
+├── data/
+│   ├── examples/
+│   ├── sample_retail.csv
+│   ├── source_orders.csv
+│   └── target_orders.csv
+│
+└── storage/
+```
+
+## 8. Installation & Local Setup
+
+### Prerequisites
+
+- Python 3.10 or newer.
+- Git.
+- VS Code (recommended).
+
+### Step 1: Clone the repository
+
+```bash
+git clone https://github.com/kumudpatkar/DataGuard.git
+cd DataGuard
+```
+
+### Step 2: Create a virtual environment
+
+Windows:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+macOS / Linux:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### Step 3: Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 4: Configure environment variables
+
+Copy `.env.example` to `.env` and configure the required values.
+
+Never upload `.env` or database credentials to GitHub.
+
+### Step 5: Run the application
+
+```bash
+streamlit run app.py
+```
+
+Open:
+
+```text
+http://localhost:8501
+```
+
+## 9. Using Your Own Data
+
+DataGuard supports user-provided datasets.
+
+### Reconciliation
+
+1. Open the Order Reconciliation module.
+2. Select the option to upload your own files.
+3. Upload the source and target CSV or Excel files.
+4. Select the matching-key column.
+5. Map the comparison columns.
+6. Configure the numerical tolerance.
+7. Execute reconciliation.
+8. Review matched records and exceptions.
+
+### Custom Quality Rules
+
+Modify:
+
+```text
+config/rules.yaml
+```
+
+Add or update business validation rules according to the requirements of the dataset.
+
+### Custom Pipelines
+
+Modify:
+
+```text
+config/pipeline.yaml
+```
+
+Use the existing pipeline configuration as a reference.
+
+## 10. Automated Testing
+
+DataGuard includes automated tests covering:
+
+- Reconciliation logic.
+- Duplicate and missing records.
+- Data quality rules.
+- Financial risk calculations.
+- Root cause detection.
+- Exception workflow.
+- Retail analytics.
+- Application page smoke tests.
+
+Run the test suite:
 
 ```bash
 python -m pytest
 ```
 
-The suite covers the reconciliation edge cases, risk maths, root-cause detection, the rules
-engine, the ticket workflow, the retail logic, and opens every page of the app.
+## 11. Deployment
 
-## Optional: MySQL
+DataGuard is deployed using Streamlit Community Cloud.
+
+**Live Application:**
+
+https://dataguard-gu6qtnvkwu3ey3nffm5out.streamlit.app/
+
+**Deployment platform:** Streamlit Community Cloud
+
+**Source code:** GitHub
+
+The application is connected to the GitHub repository and can receive updates through the deployment workflow.
+
+## 12. Optional MySQL Integration
+
+MySQL integration is available for loading order datasets into relational tables.
+
+Example:
 
 ```bash
-python scripts/load_to_mysql.py --file data/source_orders.csv --table source_orders
+python scripts/load_to_mysql.py \
+  --file data/source_orders.csv \
+  --table source_orders
 ```
 
-The login comes from `.env`. The app itself does not need MySQL.
+Database credentials should be configured through environment variables.
 
-## Docker
+The main dashboard does not require MySQL for its standard demonstration workflow.
+
+## 13. Docker Support
+
+Build the Docker image:
 
 ```bash
 docker build -t dataguard .
+```
+
+Run the container:
+
+```bash
 docker run -p 8501:8501 dataguard
 ```
 
-## Known limits
+Access the application at:
 
-* **No login.** The "Working as" name only labels audit entries. For shared company use, put the
-  app behind your single sign-on or a reverse proxy with authentication.
-* **SQLite** suits one person or a small team. For many simultaneous users, move the workflow
-  tables to PostgreSQL or MySQL.
-* The retail sample is in GBP. INR is a display conversion at a rate you set, not a historical rate.
-* The whole of each file is held in memory. Millions of rows need a database-backed approach.
+```text
+http://localhost:8501
+```
 
-## Ideas for the next version
+## 14. Current Limitations
 
-AI-written explanations for each exception, many-to-one matching (one payment settling several
-orders), fuzzy key matching, role-based permissions, and a PostgreSQL backend.
+- Authentication and role-based access control are not currently implemented.
+- SQLite is intended for individual or small-team workflows.
+- Larger multi-user deployments may require PostgreSQL or MySQL-backed workflow storage.
+- Retail sample currency is GBP; INR conversion uses a configurable rate rather than historical exchange rates.
+- Datasets are processed in memory, so very large-scale workloads may require database-backed processing.
+- External alert delivery requires provider configuration.
+
+## 15. Future Enhancements
+
+Planned improvements include:
+
+- AI-assisted explanations of reconciliation exceptions.
+- Intelligent anomaly detection.
+- Fuzzy matching for inconsistent transaction identifiers.
+- Many-to-one payment reconciliation.
+- Role-based access control.
+- Multi-user support.
+- PostgreSQL-backed workflow storage.
+- Advanced financial risk analytics.
+- Enhanced automated reporting.
+
+## 16. Author
+
+**Kumud Satyawan Patkar**
+
+Data Analyst | Python | SQL | Excel | Power BI
+
+GitHub: https://github.com/kumudpatkar
+
+LinkedIn: https://linkedin.com/in/kumud-patkar-928180283
+
+Portfolio: https://kumud-portfolio-rho.vercel.app/
+
+---
+
+## Project Links
+
+| Resource | Link |
+|---|---|
+| Live Demo | https://dataguard-gu6qtnvkwu3ey3nffm5out.streamlit.app/ |
+| GitHub Repository | https://github.com/kumudpatkar/DataGuard |
+
+**DataGuard — Making business data more reliable, transparent and actionable.**
