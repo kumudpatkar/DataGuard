@@ -1,0 +1,10 @@
+streamlit>=1.50
+pandas>=2.2
+numpy>=1.26
+plotly>=5.20
+PyYAML>=6.0
+openpyxl>=3.1
+python-dotenv>=1.0
+pytest>=8.0
+# Only needed for scripts/load_to_mysql.py (optional)
+mysql-connector-python>=8.4

@@ -1,0 +1,11 @@
+order_id,customer_id,order_amount,status
+1001,C101,1200.0,Completed
+1002,C999,850,Pending
+1003,C103,450.0,Pending
+1004,C104,2050.0,Completed
+1005,C105,675.0,Completed
+1005,C105,675.0,Completed
+1006,C106,990.0,Cancelled
+1007,C107,1500.0,Completed
+1008,C108,320.0,Completed
+1011,C111,550.0,Completed

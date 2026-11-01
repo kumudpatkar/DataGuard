@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "DataGuard: start the app",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m streamlit run app.py",
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "DataGuard: run tests",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest",
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "DataGuard: run the daily pipeline",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} scripts/run_daily.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "DataGuard: regenerate demo data",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} scripts/generate_demo_data.py",
+      "problemMatcher": []
+    }
+  ]
+}

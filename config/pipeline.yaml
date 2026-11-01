@@ -1,0 +1,44 @@
+# DataGuard pipelines
+# ---------------------------------------------------------------------------
+# A pipeline tells DataGuard HOW to compare two files. You can add your own
+# pipelines below. The app and the daily script both read this file.
+
+pipelines:
+  - name: orders_vs_payments
+    description: Orders in the order system vs payments received by the payment gateway.
+
+    # Files (relative to the project folder)
+    source_file: data/source_orders.csv
+    target_file: data/target_orders.csv
+
+    # Which column identifies a record on each side
+    key:
+      source: order_id
+      target: order_id
+
+    # The payment system writes "ORD-10001". This removes the prefix so it
+    # matches "10001" in the order system.
+    key_prefix_regex: "^ORD-"
+
+    # Columns to compare:  source column -> target column
+    columns:
+      customer_id: customer_id
+      order_amount: order_amount
+      status: status
+
+    amount_column: order_amount     # used for Money-at-Risk and tolerance
+    status_column: status           # used for timing rules
+
+    # Differences up to these values are NOT reported as errors
+    tolerance:
+      absolute: 1.00                # e.g. rupee rounding
+      percent: 0.0
+
+    # (source status, target status) pairs that are only a timing delay
+    timing_rules:
+      - [Completed, Pending]
+
+    case_sensitive: false
+
+    # Quality rules (from config/rules.yaml) checked on the source file; feeds the health score
+    rule_set: orders

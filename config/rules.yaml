@@ -1,0 +1,34 @@
+# DataGuard quality rules
+# ---------------------------------------------------------------------------
+# Each rule set is a named list of rules. Add your own sets below.
+#
+# Rule types:
+#   required, positive, non_negative, unique, allowed_values,
+#   range (min, max), regex (pattern), date_format (format),
+#   cross_column (left: [colA, colB], operator: multiply|add|subtract|divide, tolerance),
+#   referential (reference, reference_column)
+#
+# Optional on every rule:  name: "text shown in reports"   severity: High|Medium|Low
+
+rule_sets:
+  - name: orders
+    description: Checks for the order file (source_orders.csv)
+    rules:
+      - {column: order_id, type: required, severity: High}
+      - {column: order_id, type: unique, severity: High, name: "Order id is unique"}
+      - {column: customer_id, type: required, severity: Medium}
+      - {column: order_amount, type: positive, severity: High, name: "Order amount above zero"}
+      - {column: status, type: allowed_values, allowed_values: [Completed, Pending, Cancelled], severity: Medium}
+      - {column: order_date, type: date_format, format: "%Y-%m-%d", severity: Low}
+
+  - name: retail_transactions
+    description: Checks for the retail invoice lines (data.csv)
+    rules:
+      - {column: InvoiceNo, type: required, severity: High}
+      - {column: StockCode, type: required, severity: High}
+      - {column: Description, type: required, severity: Low, name: "Product has a description"}
+      - {column: Quantity, type: positive, severity: Medium, name: "Quantity above zero"}
+      - {column: UnitPrice, type: positive, severity: High, name: "Unit price above zero"}
+      - {column: CustomerID, type: required, severity: Medium, name: "Customer is identified"}
+      - {column: Country, type: required, severity: Low}
+      - {column: UnitPrice, type: range, min: 0, max: 5000, severity: Medium, name: "Unit price is realistic"}

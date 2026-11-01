@@ -1,0 +1,17 @@
+# Environment and secrets
+.venv/
+venv/
+.env
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local database and generated output
+storage/*.db
+reports/*.csv
+reports/*.xlsx
+
+# Your full raw retail file (large). Put it at data/data.csv to use it.
+data/data.csv
