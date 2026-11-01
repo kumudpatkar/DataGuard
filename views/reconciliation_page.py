@@ -225,14 +225,15 @@ def _diffs_tab(out):
     st.metric("Field differences shown", f"{len(view):,}")
 
     display_columns = [
-        "Record Key",
-        "Field",
-        "Source Value",
-        "Target Value",
-        "Difference",
-        "Difference %",
-        "Is Timing",
-    ]
+    "Record Key",
+    "Target Row",
+    "Field",
+    "Source Value",
+    "Target Value",
+    "Difference",
+    "Difference %",
+    "Is Timing",
+]
 
     available_columns = [
         column for column in display_columns if column in view.columns
