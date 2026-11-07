@@ -335,6 +335,23 @@ def reconcile(
     dup_s = set(s_counts[s_counts > 1].index)
     dup_t = set(t_counts[t_counts > 1].index)
 
+    # ---- duplicate statistics -----------------------------------------
+    source_unique_records = int(s_counts.size)
+    target_unique_records = int(t_counts.size)
+
+    source_duplicate_keys = len(dup_s)
+    target_duplicate_keys = len(dup_t)
+
+    source_duplicate_rows = int(s_counts[s_counts > 1].sum())
+    target_duplicate_rows = int(t_counts[t_counts > 1].sum())
+
+    source_extra_duplicate_copies = int(
+        (s_counts[s_counts > 1] - 1).sum()
+    )
+    target_extra_duplicate_copies = int(
+        (t_counts[t_counts > 1] - 1).sum()
+    )
+
     for dup_keys, frame, counts, other_counts, status, side in (
         (dup_s, s, s_counts, t_counts, Status.DUP_SOURCE, "source"),
         (dup_t, t, t_counts, s_counts, Status.DUP_TARGET, "target"),
@@ -768,6 +785,18 @@ def reconcile(
         len(target),
         len(tolerated_keys),
     )
+
+    # Add detailed duplicate statistics
+    stats.update({
+        "source_unique_records": source_unique_records,
+        "target_unique_records": target_unique_records,
+        "source_duplicate_keys": source_duplicate_keys,
+        "target_duplicate_keys": target_duplicate_keys,
+        "source_duplicate_rows": source_duplicate_rows,
+        "target_duplicate_rows": target_duplicate_rows,
+        "source_extra_duplicate_copies": source_extra_duplicate_copies,
+        "target_extra_duplicate_copies": target_extra_duplicate_copies,
+    })
 
     return ReconResult(
         results=results,
