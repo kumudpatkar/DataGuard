@@ -156,3 +156,34 @@ def test_duplicate_target_amount_mismatch_has_field_level_details():
 
     assert not mismatch.empty
     assert mismatch.iloc[0]["Difference"] == -50.0
+
+def test_row_match_rate_with_duplicate_source_rows():
+    src = pd.DataFrame({"id": [1, 1, 2]})
+    tgt = pd.DataFrame({"id": [1, 2]})
+
+    result = reconcile(src, tgt, make_cfg(prefix_regex=None))
+
+    assert result.stats["source_rows"] == 3
+    assert result.stats["target_rows"] == 2
+    assert result.stats["matched"] == 1
+    assert result.stats["row_match_rate"] == pytest.approx(33.33, abs=0.01)
+
+
+def test_row_match_rate_when_all_rows_match():
+    src = pd.DataFrame({"id": [1, 2, 3]})
+    tgt = pd.DataFrame({"id": [1, 2, 3]})
+
+    result = reconcile(src, tgt, make_cfg(prefix_regex=None))
+
+    assert result.stats["row_match_rate"] == pytest.approx(100.0)
+
+
+def test_row_match_rate_when_target_has_missing_rows():
+    src = pd.DataFrame({"id": [1, 2]})
+    tgt = pd.DataFrame({"id": [1]})
+
+    result = reconcile(src, tgt, make_cfg(prefix_regex=None))
+
+    assert result.stats["source_rows"] == 2
+    assert result.stats["target_rows"] == 1
+    assert result.stats["row_match_rate"] == pytest.approx(50.0)

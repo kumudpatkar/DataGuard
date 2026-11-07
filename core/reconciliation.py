@@ -806,6 +806,7 @@ def reconcile(
     )
 
 
+
 def summarize(
     results: pd.DataFrame,
     source_rows: int,
@@ -821,6 +822,7 @@ def summarize(
 
     total = len(results)
     matched = counts.get(Status.MATCHED, 0)
+    row_total = max(source_rows, target_rows)
 
     return {
         "source_rows": int(source_rows),
@@ -847,9 +849,18 @@ def summarize(
         ),
         "within_tolerance": int(tolerated),
         "exceptions": int(total - matched),
+
+        # Existing metric: matched result records / total result records.
         "match_rate": (
             float(matched / total * 100.0)
-            if total
+            if total > 0
+            else 0.0
+        ),
+
+        # New metric: matched records / larger input row count.
+        "row_match_rate": (
+            float(matched / row_total * 100.0)
+            if row_total > 0
             else 0.0
         ),
     }

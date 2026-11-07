@@ -75,3 +75,45 @@ def test_timing_delay_counts_as_half_a_match():
              "duplicate_source": 0, "duplicate_target": 0}
     # effective match 95% -> Matching part 85
     assert health_score(stats, 100, 100)["breakdown"].iloc[0]["Value %"] == pytest.approx(85.0)
+
+def test_health_score_uses_row_level_match_rate():
+    stats = {
+        "total_records": 2,
+        "matched": 1,
+        "timing": 0,
+        "duplicate_source": 1,
+        "duplicate_target": 0,
+        "source_rows": 3,
+        "target_rows": 2,
+        "row_match_rate": 100 / 3,
+        "source_extra_duplicate_copies": 1,
+        "target_extra_duplicate_copies": 0,
+    }
+
+    result = health_score(stats, 100, 100)
+
+    matching = result["breakdown"].iloc[0]["Value %"]
+    uniqueness = result["breakdown"].iloc[3]["Value %"]
+
+    assert matching == pytest.approx(0.0)
+    assert uniqueness == pytest.approx(66.67, abs=0.01)
+
+
+def test_health_score_uses_extra_duplicate_copies():
+    stats = {
+        "total_records": 2,
+        "matched": 2,
+        "timing": 0,
+        "duplicate_source": 1,
+        "duplicate_target": 0,
+        "source_rows": 3,
+        "target_rows": 2,
+        "row_match_rate": 100.0,
+        "source_extra_duplicate_copies": 1,
+        "target_extra_duplicate_copies": 0,
+    }
+
+    result = health_score(stats, 100, 100)
+
+    uniqueness = result["breakdown"].iloc[3]["Value %"]
+    assert uniqueness == pytest.approx(66.67, abs=0.01)

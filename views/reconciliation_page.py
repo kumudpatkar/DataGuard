@@ -104,26 +104,59 @@ def _upload_ui():
     return cfg, source, target
 
 
+
 def _kpis(ctx: Context, out):
     stats, risk, health = out.recon.stats, out.risk, out.health
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Health score", f"{health['score']:.1f}", border=True)
+
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+
+    c1.metric(
+        "Health score",
+        f"{health['score']:.1f}",
+        border=True,
+    )
+
     c2.metric(
-    "Current run risk",
-    ctx.fmt(risk["total_risk"]),
-    border=True,
-    help="Risk calculated from the current reconciliation run."
-)
-    c3.metric("Exceptions", f"{stats['exceptions']:,}", border=True)
-    c4.metric("Match rate", f"{stats['match_rate']:.1f}%", border=True)
-    c5.metric("Within tolerance", f"{stats['within_tolerance']:,}", border=True,
-              help="Small differences that were ignored because of the tolerance setting.")
+        "Current run risk",
+        ctx.fmt(risk["total_risk"]),
+        border=True,
+        help="Risk calculated from the current reconciliation run.",
+    )
+
+    c3.metric(
+        "Exceptions",
+        f"{stats['exceptions']:,}",
+        border=True,
+    )
+
+    c4.metric(
+        "Match rate",
+        f"{stats['match_rate']:.1f}%",
+        border=True,
+        help="Matched result records divided by total result records.",
+    )
+
+    c5.metric(
+        "Row Match Rate",
+        f"{stats.get('row_match_rate', stats['match_rate']):.1f}%",
+        border=True,
+        help="Matched records divided by the larger source or target row count.",
+    )
+
+    c6.metric(
+        "Within tolerance",
+        f"{stats['within_tolerance']:,}",
+        border=True,
+        help="Small differences that were ignored because of the tolerance setting.",
+    )
+
     st.markdown(
         f"{badge(health['label'], score_color(health['score']))} &nbsp; "
         f"{risk['high']} high, {risk['medium']} medium and {risk['low']} low priority exceptions. "
         f"The 20 worst exceptions hold **{risk['top20_share']:.0f}%** of the money at risk.",
         unsafe_allow_html=True,
     )
+
 
 
 def _priority_tab(ctx: Context, out):
