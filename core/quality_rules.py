@@ -257,9 +257,9 @@ def suggest_rules(df: pd.DataFrame, max_allowed_values: int = 10) -> list[dict]:
                                         "reason": "No negative values in this file."})
 
         looks_like_id = any(lowered.endswith(w) for w in ID_WORDS)
-        if looks_like_id and series.notna().all() and series.nunique() == n:
+        if looks_like_id:
             suggestions.append({"column": column, "type": "unique",
-                                "reason": "Every value is different, so it behaves like an ID."})
+                                "reason": "Column looks like an identifier; its values should be unique."})
 
         if not is_numeric and any(w in lowered for w in DATE_WORDS) and len(non_null):
             for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y %H:%M", "%Y-%m-%d %H:%M:%S"):

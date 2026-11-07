@@ -104,3 +104,18 @@ def test_suggest_rules_finds_sensible_rules():
     assert ("order_amount", "positive") in types
     assert ("status", "allowed_values") in types
     assert ("order_date", "date_format") in types
+
+
+
+def test_suggest_rules_flags_duplicate_id_columns():
+    df = pd.DataFrame({
+        "order_id": [1001, 1002, 1002, 1003],
+        "amount": [100, 200, 300, 400],
+    })
+
+    suggestions = suggest_rules(df)
+
+    assert any(
+        rule["column"] == "order_id" and rule["type"] == "unique"
+        for rule in suggestions
+    )

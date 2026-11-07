@@ -123,7 +123,7 @@ def _reconciliation_section(ctx: Context):
     open_tickets = counts.get("Open", 0) + counts.get("Investigating", 0)
 
     # Executive KPI cards
-    c1, c2, c3, c4 = st.columns(4, gap="medium")
+    c1, c2, c3, c4, c5 = st.columns(5, gap="medium")
 
     with c1:
         st.metric(
@@ -154,7 +154,15 @@ def _reconciliation_section(ctx: Context):
             label="MATCH RATE",
             value=f"{latest['Match Rate %']:.1f}%",
             border=True,
-            help="Percentage of records matched in the latest reconciliation.",
+            help="Matched result records divided by total result records.",
+        )
+
+    with c5:
+        st.metric(
+            label="ROW MATCH RATE",
+            value=f"{latest['Row Match Rate %']:.1f}%",
+            border=True,
+            help="Matched records divided by the larger source or target row count.",
         )
 
     # Current pipeline health status

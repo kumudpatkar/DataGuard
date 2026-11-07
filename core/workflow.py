@@ -197,11 +197,22 @@ class Workflow:
                 "reopened": len(reopen_ids), "auto_resolved": auto_closed}
 
     def list_runs(self, pipeline: str | None = None) -> pd.DataFrame:
-        query = ("SELECT id AS 'Run', pipeline AS 'Pipeline', run_at AS 'Run At', run_by AS 'Run By', "
-                 "total_records AS 'Records', matched AS 'Matched', exceptions AS 'Exceptions', "
-                 "ROUND(match_rate, 2) AS 'Match Rate %', ROUND(total_risk, 2) AS 'Money at Risk', "
-                 "ROUND(health_score, 1) AS 'Health Score', ROUND(rule_pass_rate, 1) AS 'Rule Pass %' "
-                 "FROM runs")
+        query = (
+            "SELECT id AS 'Run', pipeline AS 'Pipeline', "
+            "run_at AS 'Run At', run_by AS 'Run By', "
+            "total_records AS 'Records', matched AS 'Matched', "
+            "exceptions AS 'Exceptions', "
+            "ROUND(match_rate, 2) AS 'Match Rate %', "
+            "CASE "
+            "WHEN MAX(source_rows, target_rows) > 0 "
+            "THEN ROUND(100.0 * matched / MAX(source_rows, target_rows), 2) "
+            "ELSE 0 "
+            "END AS 'Row Match Rate %', "
+            "ROUND(total_risk, 2) AS 'Money at Risk', "
+            "ROUND(health_score, 1) AS 'Health Score', "
+            "ROUND(rule_pass_rate, 1) AS 'Rule Pass %' "
+            "FROM runs"
+        )
         params: tuple = ()
         if pipeline:
             query += " WHERE pipeline = ?"
