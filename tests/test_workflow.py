@@ -1,3 +1,4 @@
+import sqlite3
 import pandas as pd
 import pytest
 
@@ -69,3 +70,67 @@ def test_run_history_is_kept(wf):
     save(wf, make_results([("1", "Missing in Target")]))
     save(wf, make_results([("1", "Missing in Target")]))
     assert len(wf.list_runs("p1")) == 2
+
+def test_foreign_keys_prevent_orphan_comments(wf):
+    with pytest.raises(sqlite3.IntegrityError):
+        with wf._connect() as conn:
+            conn.execute(
+                "INSERT INTO comments (exception_id, author, body, created_at) "
+                "VALUES (?, ?, ?, ?)",
+                (999, "tester", "Invalid comment", "2026-11-07"),
+            )
+
+def test_resolved_ticket_reopens_if_it_appears_again(wf):
+    save(wf, make_results([
+        ("1", "Missing in Target"),
+        ("2", "Missing in Target"),
+    ]))
+
+    # Ticket 1 disappears and gets auto-resolved.
+    save(wf, make_results([
+        ("2", "Missing in Target"),
+    ]))
+
+    # Ticket 1 appears again.
+    out = save(wf, make_results([
+        ("1", "Missing in Target"),
+        ("2", "Missing in Target"),
+    ]))
+
+    assert out["reopened"] == 1
+
+    tickets = wf.list_exceptions("p1")
+    ticket_1 = tickets[tickets["Record Key"] == "1"].iloc[0]
+
+    assert ticket_1["Status"] == "Open"
+def test_ignored_ticket_stays_ignored_if_it_appears_again(wf):
+    save(wf, make_results([
+        ("1", "Missing in Target"),
+    ]))
+
+    ticket = int(wf.list_exceptions("p1").iloc[0]["Ticket"])
+    wf.update_exceptions([ticket], "tester", status="Ignored")
+
+    out = save(wf, make_results([
+        ("1", "Missing in Target"),
+    ]))
+
+    assert out["reopened"] == 0
+    assert wf.list_exceptions("p1").iloc[0]["Status"] == "Ignored"
+
+def test_resolution_note_is_saved_and_audited(wf):
+    save(wf, make_results([
+        ("1", "Missing in Target"),
+    ]))
+
+    ticket = int(wf.list_exceptions("p1").iloc[0]["Ticket"])
+
+    assert wf.save_resolution_note(
+        ticket, "tester", "Payment verified with bank statement"
+    )
+
+    row = wf.list_exceptions("p1").iloc[0]
+    assert row["Resolution Note"] == "Payment verified with bank statement"
+
+    log = " ".join(wf.audit_log()["Action"])
+    assert "Resolution note updated" in log
